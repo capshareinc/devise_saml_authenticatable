@@ -20,8 +20,8 @@ module Devise
 
       def authenticatable_salt
         if Devise.saml_session_index_key &&
-           self.respond_to?(Devise.saml_session_index_key) &&
-           self.send(Devise.saml_session_index_key).present?
+          self.respond_to?(Devise.saml_session_index_key) &&
+          self.send(Devise.saml_session_index_key).present?
           self.send(Devise.saml_session_index_key)
         else
           super
@@ -30,10 +30,10 @@ module Devise
 
       module ClassMethods
         def authenticate_with_saml(saml_response, relay_state)
-          key = Devise.saml_default_user_key
+          key                = Devise.saml_default_user_key
           decorated_response = ::SamlAuthenticatable::SamlResponse.new(
             saml_response,
-            attribute_map
+            attribute_map(saml_response)
           )
           if (Devise.saml_use_subject)
             auth_value = saml_response.name_id
@@ -77,21 +77,27 @@ module Devise
           find_for_authentication(conditions)
         end
 
-        def attribute_map
-          @attribute_map ||= attribute_map_for_environment
+        def attribute_map(saml_response)
+          @attribute_map ||= attribute_map_for_environment(saml_response)
         end
 
         private
 
-        def attribute_map_for_environment
-          attribute_map = YAML.load(File.read("#{Rails.root}/config/attribute-map.yml"))
-          if attribute_map.has_key?(Rails.env)
-            attribute_map[Rails.env]
+        def attribute_map_for_environment(saml_response)
+          if Devise.saml_map_attributes
+            Devise.saml_map_attributes.call(saml_response)
           else
-            attribute_map
+            attribute_map = YAML.load(File.read("#{Rails.root}/config/attribute-map.yml"))
+            if attribute_map.has_key?(Rails.env)
+              attribute_map[Rails.env]
+            else
+              attribute_map
+            end
           end
         end
+
       end
     end
   end
 end
+

@@ -112,6 +112,9 @@ module Devise
   # See saml_default_resource_locator above for an example.
   mattr_accessor :saml_resource_locator
   @@saml_resource_locator = @@saml_default_resource_locator
+
+  mattr_accessor :saml_map_attributes
+  mattr_accessor :saml_idp_adapter
 end
 
 # Add saml_authenticatable strategy to defaults.
